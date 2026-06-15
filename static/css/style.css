@@ -639,19 +639,21 @@ body {
     border-color: var(--color-general-border);
 }
 
-/* Tweet selection container */
-.tweet-action-container {
+/* Card actions container */
+.card-actions-container {
+    display: flex;
+    gap: 8px;
     opacity: 0;
     transform: translateY(2px);
     transition: all var(--transition-fast);
 }
 
-.update-card:hover .tweet-action-container {
+.update-card:hover .card-actions-container {
     opacity: 1;
     transform: translateY(0);
 }
 
-.btn-tweet-action {
+.btn-card-action {
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
@@ -666,16 +668,29 @@ body {
     transition: all var(--transition-fast);
 }
 
-.btn-tweet-action:hover {
+.btn-card-action:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: var(--border-color-hover);
+}
+
+.btn-card-action.btn-tweet-action:hover {
     background-color: var(--color-x-brand);
     color: var(--color-x-bg);
     border-color: var(--color-x-brand);
 }
 
-.btn-tweet-action svg {
+.btn-card-action svg {
     width: 14px;
     height: 14px;
     fill: currentColor;
+}
+
+.btn-card-action svg.stroke-svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 /* Card Content Description (HTML parsed) */
@@ -1039,15 +1054,17 @@ body {
         gap: 10px;
     }
     
-    .tweet-action-container {
+    .card-actions-container {
         opacity: 1;
         transform: none;
         width: 100%;
         margin-top: 10px;
+        flex-wrap: wrap;
     }
     
-    .btn-tweet-action {
-        width: 100%;
+    .btn-card-action {
+        flex: 1;
+        min-width: calc(50% - 4px);
         justify-content: center;
     }
     

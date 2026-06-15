@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================================================
     // Header & Actions
     const btnRefresh = document.getElementById('btn-refresh');
+    const btnExport = document.getElementById('btn-export');
     const iconSync = btnRefresh.querySelector('.icon-sync');
     const cacheStatusText = document.getElementById('cache-status-text');
     
@@ -241,12 +242,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     card.innerHTML = `
                         <div class="card-header">
                             <span class="badge ${badgeClass}">${update.type}</span>
-                            <div class="tweet-action-container">
-                                <button class="btn-tweet-action" aria-label="Tweet this specific update">
+                            <div class="card-actions-container">
+                                <button class="btn-card-action btn-copy-update" aria-label="Copy update to clipboard">
+                                    <svg class="stroke-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                    </svg>
+                                    <span>Copy</span>
+                                </button>
+                                <button class="btn-card-action btn-tweet-action" aria-label="Tweet this specific update">
                                     <svg viewBox="0 0 24 24" fill="currentColor">
                                         <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                                     </svg>
-                                    <span>Tweet Update</span>
+                                    <span>Tweet</span>
                                 </button>
                             </div>
                         </div>
@@ -254,6 +262,35 @@ document.addEventListener('DOMContentLoaded', () => {
                             ${update.description}
                         </div>
                     `;
+                    
+                    // Wire up Copy action
+                    card.querySelector('.btn-copy-update').addEventListener('click', async (e) => {
+                        const plainText = htmlToPlainText(update.description);
+                        const copyText = `BigQuery ${update.type} (${entry.date}):\n\n${plainText}\n\nRead more: ${entry.link}`;
+                        
+                        try {
+                            await navigator.clipboard.writeText(copyText);
+                            showToast("Update copied to clipboard!");
+                            
+                            // Visual feedback
+                            const btn = card.querySelector('.btn-copy-update');
+                            const originalHTML = btn.innerHTML;
+                            btn.innerHTML = `
+                                <svg class="stroke-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                <span>Copied!</span>
+                            `;
+                            btn.disabled = true;
+                            setTimeout(() => {
+                                btn.innerHTML = originalHTML;
+                                btn.disabled = false;
+                            }, 2000);
+                        } catch (err) {
+                            console.error("Card copy failed:", err);
+                            showToast("Failed to copy update.", "error");
+                        }
+                    });
                     
                     // Wire up Tweet action
                     card.querySelector('.btn-tweet-action').addEventListener('click', () => {
@@ -523,6 +560,91 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchReleaseNotes(true);
     });
     
+    // Export to CSV handler
+    btnExport.addEventListener('click', () => {
+        const filteredData = [];
+        
+        updatesState.entries.forEach(entry => {
+            entry.updates.forEach(update => {
+                let typeMatches = false;
+                if (updatesState.activeFilter === 'all') {
+                    typeMatches = true;
+                } else if (updatesState.activeFilter === 'Breaking') {
+                    typeMatches = (update.type === 'Breaking' || update.type === 'Issue');
+                } else {
+                    typeMatches = (update.type === updatesState.activeFilter);
+                }
+                
+                let searchMatches = true;
+                if (updatesState.searchQuery.trim() !== '') {
+                    const query = updatesState.searchQuery.toLowerCase();
+                    const plainContent = htmlToPlainText(update.description).toLowerCase();
+                    const titleText = entry.date.toLowerCase();
+                    const typeText = update.type.toLowerCase();
+                    
+                    searchMatches = plainContent.includes(query) || 
+                                    titleText.includes(query) || 
+                                    typeText.includes(query);
+                }
+                
+                if (typeMatches && searchMatches) {
+                    filteredData.push({
+                        date: entry.date,
+                        type: update.type,
+                        description: htmlToPlainText(update.description),
+                        link: entry.link
+                    });
+                }
+            });
+        });
+        
+        if (filteredData.length === 0) {
+            showToast("No release notes available to export.", "error");
+            return;
+        }
+        
+        const headers = ["Date", "Type", "Description", "Link"];
+        const rows = [headers.join(",")];
+        
+        filteredData.forEach(item => {
+            const escapeCSV = (val) => {
+                if (val === null || val === undefined) return '""';
+                const str = String(val);
+                return `"${str.replace(/"/g, '""')}"`;
+            };
+            
+            const row = [
+                escapeCSV(item.date),
+                escapeCSV(item.type),
+                escapeCSV(item.description),
+                escapeCSV(item.link)
+            ];
+            rows.push(row.join(","));
+        });
+        
+        const csvString = rows.join("\n");
+        
+        try {
+            const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            
+            const dateStamp = new Date().toISOString().slice(0, 10);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `bigquery_release_notes_${dateStamp}.csv`);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showToast(`Exported ${filteredData.length} updates to CSV!`);
+        } catch (error) {
+            console.error("CSV Export failed:", error);
+            showToast("Failed to export CSV.", "error");
+        }
+    });
+
     // Initial fetch on mount
     fetchReleaseNotes(false);
 });
