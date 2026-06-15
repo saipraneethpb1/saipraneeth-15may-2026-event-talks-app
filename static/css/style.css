@@ -64,6 +64,28 @@
     --max-width: 1280px;
 }
 
+/* Light Mode Variables Override */
+body.light-mode {
+    --bg-primary: #f8fafc;
+    --bg-secondary: #ffffff;
+    --bg-card: rgba(241, 245, 249, 0.7);
+    --bg-card-hover: rgba(226, 232, 240, 0.85);
+    --bg-input: #ffffff;
+    
+    --border-color: rgba(15, 23, 42, 0.08);
+    --border-color-hover: rgba(15, 23, 42, 0.15);
+    
+    --text-primary: #0f172a;
+    --text-secondary: #334155;
+    --text-muted: #64748b;
+    
+    --gradient-card: linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.4) 100%);
+    
+    --color-x-brand: #0f172a;
+    --color-x-brand-hover: #1e293b;
+    --color-x-bg: #ffffff;
+}
+
 /* ==========================================================================
    BASE STYLES & LAYOUT
    ========================================================================== */
@@ -279,6 +301,15 @@ body {
 .btn-tweet:hover {
     background-color: var(--color-x-brand-hover);
     transform: translateY(-1px);
+}
+
+.btn-theme-toggle {
+    padding: 10px;
+    border-radius: 50%;
+    aspect-ratio: 1 / 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn-link {
@@ -1107,4 +1138,27 @@ body {
     .modal-actions .btn {
         width: 100%;
     }
+}
+
+/* Light Mode Specific Components Adjustments */
+body.light-mode .update-preview-box {
+    background: rgba(15, 23, 42, 0.02);
+}
+
+body.light-mode .progress-ring__circle-bg {
+    stroke: rgba(15, 23, 42, 0.08);
+}
+
+body.light-mode .toast {
+    background: #ffffff;
+    color: #0f172a;
+    box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.1), 0 4px 6px -4px rgba(15, 23, 42, 0.05);
+}
+
+body.light-mode .toast.toast-success {
+    border-left: 3px solid var(--color-feature);
+}
+
+body.light-mode .toast.toast-error {
+    border-left: 3px solid var(--color-breaking);
 }

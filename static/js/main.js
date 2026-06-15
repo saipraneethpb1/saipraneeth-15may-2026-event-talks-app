@@ -29,6 +29,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Header & Actions
     const btnRefresh = document.getElementById('btn-refresh');
     const btnExport = document.getElementById('btn-export');
+    const btnThemeToggle = document.getElementById('btn-theme-toggle');
+    const iconSun = btnThemeToggle.querySelector('.icon-sun');
+    const iconMoon = btnThemeToggle.querySelector('.icon-moon');
     const iconSync = btnRefresh.querySelector('.icon-sync');
     const cacheStatusText = document.getElementById('cache-status-text');
     
@@ -644,6 +647,30 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast("Failed to export CSV.", "error");
         }
     });
+
+    // Theme toggle handler
+    btnThemeToggle.addEventListener('click', () => {
+        const isLight = document.body.classList.toggle('light-mode');
+        if (isLight) {
+            localStorage.setItem('theme', 'light');
+            iconSun.classList.add('hidden');
+            iconMoon.classList.remove('hidden');
+            showToast("Swapped to Light Mode!");
+        } else {
+            localStorage.setItem('theme', 'dark');
+            iconMoon.classList.add('hidden');
+            iconSun.classList.remove('hidden');
+            showToast("Swapped to Dark Mode!");
+        }
+    });
+
+    // Check local storage for theme preference during load
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-mode');
+        iconSun.classList.add('hidden');
+        iconMoon.classList.remove('hidden');
+    }
 
     // Initial fetch on mount
     fetchReleaseNotes(false);
